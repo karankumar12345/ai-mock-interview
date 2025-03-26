@@ -28,15 +28,20 @@ interface Message {
 const Agent = ({ userName, userId, type }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
-  const [message, setMessage] = useState<Message[]>([]);
+  const [messages, setMessages] = useState<Message[]>([]);
   const isSpeaking = callStatus === CallStatus.ACTIVE;
 
   useEffect(() => {
     const onCallStart = () => setCallStatus(CallStatus.ACTIVE);
-    const onCallEnd = () => setCallStatus(CallStatus.FINISHED);
+    const onCallEnd = () => {
+      setCallStatus(CallStatus.FINISHED);
+      vapi.stop();
+    };
+
     const onMessage = (message: Message) => {
+      console.log("New Message:", message);
       if (message.type === "transcript" && message.transcriptType === "final") {
-        setMessage((prev) => [...prev, message]);
+        setMessages((prev) => [...prev, message]);
       }
     };
 
@@ -69,23 +74,33 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
 
   const handleCall = async () => {
     setCallStatus(CallStatus.CONNECTING);
-    await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
-      variableValues: { userName, userId },
-    });
+    console.log("Starting Call...");
+    console.log("VAPI Key:", process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID);
+
+    try {
+      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, {
+        variableValues: { userName, userId },
+      });
+    } catch (error) {
+      console.error("Call Start Error:", error);
+      setCallStatus(CallStatus.INACTIVE);
+    }
   };
 
   const handleDisconnected = async () => {
+    console.log("Ending Call...");
     setCallStatus(CallStatus.FINISHED);
     vapi.stop();
   };
 
-  const latestMessage = message[message.length - 1]?.content;
-  const isCallInactiveOrFinished =
-    callStatus === CallStatus.FINISHED || callStatus === CallStatus.INACTIVE;
+  const latestMessage = messages.length > 0 ? messages[messages.length - 1].content : "";
 
   const handleCallAction = () => {
-    if (isCallInactiveOrFinished) handleCall();
-    else handleDisconnected();
+    if (callStatus === CallStatus.ACTIVE || callStatus === CallStatus.CONNECTING) {
+      handleDisconnected();
+    } else {
+      handleCall();
+    }
   };
 
   return (
@@ -120,7 +135,7 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
         </div>
       </div>
 
-      {message.length > 0 && (
+      {messages.length > 0 && (
         <div className="transcript-border">
           <div className="transcript">
             <p className={cn("transition-opacity duration-500")}>{latestMessage}</p>
@@ -130,9 +145,7 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
 
       <div className="w-full flex justify-center">
         <button className="btn btn-primary" onClick={handleCallAction}>
-          {callStatus === CallStatus.ACTIVE && "End Call"}
-          {callStatus === CallStatus.FINISHED && "Re-Start"}
-          {callStatus === CallStatus.INACTIVE && "Start Call"}
+          {callStatus === CallStatus.ACTIVE ? "End Call" : "Start Call"}
           {callStatus === CallStatus.CONNECTING && "Connecting..."}
         </button>
       </div>

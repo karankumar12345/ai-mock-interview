@@ -1,5 +1,6 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
 import dayjs from "dayjs";
-import { Interview } from "@/constants";
+// import { Interview } from "@/constants";
 import React from "react";
 import Image from "next/image";
 import { getRandomInterviewCover } from "@/lib/utils";
@@ -7,7 +8,6 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import DisplayTechIcons from "./DisplayTechIcon";
 
-interface InterviewCardProps extends Interview {}
 
 const InterviewCard: React.FC<InterviewCardProps> = ({
   interviewId,
@@ -18,9 +18,9 @@ const InterviewCard: React.FC<InterviewCardProps> = ({
   createdAt,
 }) => {
   const feedback = null as Feedback | null;
-
+console.log("techstack",techstack[0]?.split(" "))
   const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
-  const formattedDate = dayjs(feedback?.createdAt || createdAt).format(
+  const formattedDate = dayjs( createdAt).format(
     "YYYY-MM-DD"
   );
 
@@ -58,7 +58,8 @@ const InterviewCard: React.FC<InterviewCardProps> = ({
             </div>
 
             <div className="flex flex-row justify-between">
-             <DisplayTechIcons techStack={techstack}/>
+            <DisplayTechIcons techStack={techstack[0]?.split(" ")} />
+
               <Button className="btn-primary">
                 <Link
                   href={

@@ -10,6 +10,7 @@ import { cookies } from 'next/headers';
 // import { DocumentData } from 'firebase-admin/firestore';
 
 
+  
 export async function signUp(params:SignUpParams){
   const {uid,name,email}=params;
 
@@ -88,9 +89,9 @@ export async function SetSession(idToken:string) {
 
 
 export async function getCurrentUser(): Promise<User | null> {
-    const cookieStore = cookies(); // No need for 'await' here
+    const cookieStore = await cookies(); // No need for 'await' here
 
-    const sessionCookie = (await cookieStore).get('session')?.value;
+    const sessionCookie =  cookieStore.get('session')?.value;
     if (!sessionCookie) return null; // Fix the condition
 
     try {
@@ -100,7 +101,10 @@ export async function getCurrentUser(): Promise<User | null> {
 
         if (!userRecord.exists) return null; // Explicitly return null if user not found
 
-        return userRecord.data() as User; // Cast the Firestore document to User type
+        return {
+            ...userRecord.data(),
+            id: userRecord.id,
+          } as User; // Cast the Firestore document to User type
     } catch (error) {
         console.error("Error verifying session:", error);
         return null;
@@ -113,4 +117,32 @@ export async function isAuthenticated(){
     return !!user;
 
 
+}
+export async function getInterviewByUserID(userId: string): Promise<Interview[]> {
+  const interviewSnapshot = await db.collection("interviews")
+  .where("userId", "==", userId)
+ 
+  .get();
+
+
+  if (interviewSnapshot.empty) {
+    return [];
+  }
+
+  return interviewSnapshot.docs.map((doc) => ({
+    id: doc.id,
+    ...doc.data() as Interview,
+  }));
+}
+
+interface Interview {
+  id: string;
+  role: string;
+  level: string;
+  questions: string[];
+  techstack: string[];
+  createdAt: string;
+  userId: string;
+  type: string;
+  finalized: boolean;
 }
