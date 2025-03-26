@@ -1,7 +1,9 @@
-"use client"
+"use client";
 import { cn } from "@/lib/utils";
+import { vapi } from "@/lib/vapi.sdk";
 import Image from "next/image";
-import React, { useState } from "react";
+import { useRouter } from "next/navigation";
+import React, { useEffect, useState } from "react";
 
 enum CallStatus {
   INACTIVE = "INACTIVE",
@@ -12,22 +14,78 @@ enum CallStatus {
 
 interface AgentProps {
   userName: string;
+  userId: string;
+  type: "interviewer" | "candidate";
 }
 
-const Agent = ({ userName }: AgentProps) => {
+interface Message {
+  type: string;
+  transcriptType?: string;
+  role: "user" | "system" | "assistant";
+  content: string;
+}
+
+const Agent = ({ userName, userId, type }: AgentProps) => {
+  const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
+  const [message, setMessage] = useState<Message[]>([]);
   const isSpeaking = callStatus === CallStatus.ACTIVE;
-const message=[
-    'whats your name?',
-    'my name is karan '
-]
-  const handleCallAction = () => {
-    if (callStatus === CallStatus.INACTIVE || callStatus === CallStatus.FINISHED) {
-      setCallStatus(CallStatus.CONNECTING);
-      setTimeout(() => setCallStatus(CallStatus.ACTIVE), 2000); // Simulating connection delay
-    } else if (callStatus === CallStatus.ACTIVE) {
-      setCallStatus(CallStatus.FINISHED);
+
+  useEffect(() => {
+    const onCallStart = () => setCallStatus(CallStatus.ACTIVE);
+    const onCallEnd = () => setCallStatus(CallStatus.FINISHED);
+    const onMessage = (message: Message) => {
+      if (message.type === "transcript" && message.transcriptType === "final") {
+        setMessage((prev) => [...prev, message]);
+      }
+    };
+
+    const onSpeechStart = () => setCallStatus(CallStatus.ACTIVE);
+    const onSpeechEnd = () => setCallStatus(CallStatus.INACTIVE);
+    const onError = (error: Error) => console.error("Error:", error);
+
+    vapi.on("call-start", onCallStart);
+    vapi.on("call-end", onCallEnd);
+    vapi.on("message", onMessage);
+    vapi.on("speech-start", onSpeechStart);
+    vapi.on("speech-end", onSpeechEnd);
+    vapi.on("error", onError);
+
+    return () => {
+      vapi.off("call-start", onCallStart);
+      vapi.off("call-end", onCallEnd);
+      vapi.off("message", onMessage);
+      vapi.off("speech-start", onSpeechStart);
+      vapi.off("speech-end", onSpeechEnd);
+      vapi.off("error", onError);
+    };
+  }, []);
+
+  useEffect(() => {
+    if (callStatus === CallStatus.FINISHED) {
+      router.push("/interview");
     }
+  }, [callStatus, router]);
+
+  const handleCall = async () => {
+    setCallStatus(CallStatus.CONNECTING);
+    await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
+      variableValues: { userName, userId },
+    });
+  };
+
+  const handleDisconnected = async () => {
+    setCallStatus(CallStatus.FINISHED);
+    vapi.stop();
+  };
+
+  const latestMessage = message[message.length - 1]?.content;
+  const isCallInactiveOrFinished =
+    callStatus === CallStatus.FINISHED || callStatus === CallStatus.INACTIVE;
+
+  const handleCallAction = () => {
+    if (isCallInactiveOrFinished) handleCall();
+    else handleDisconnected();
   };
 
   return (
@@ -62,13 +120,14 @@ const message=[
         </div>
       </div>
 
-{message.length>0&&(
-    <div className="transcript-border">
-        <div className="transcript">
-<p  className={cn('transition-opacity duration-500 ')}>{message}</p>
+      {message.length > 0 && (
+        <div className="transcript-border">
+          <div className="transcript">
+            <p className={cn("transition-opacity duration-500")}>{latestMessage}</p>
+          </div>
         </div>
-    </div>
-)}
+      )}
+
       <div className="w-full flex justify-center">
         <button className="btn btn-primary" onClick={handleCallAction}>
           {callStatus === CallStatus.ACTIVE && "End Call"}
