@@ -7,6 +7,7 @@ import React from 'react'
 const page =async () => {
     const user=await getCurrentUser();
 
+    console.log(user)
   return (
   <>
   <h3>Interview Generation With Ai</h3>

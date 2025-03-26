@@ -35,6 +35,7 @@ const Agent = ({
   const [isSpeaking, setIsSpeaking] = useState(false);
   const [lastMessage, setLastMessage] = useState<string>("");
 
+  
   useEffect(() => {
     const onCallStart = () => {
       setCallStatus(CallStatus.ACTIVE);
@@ -121,7 +122,7 @@ const Agent = ({
       await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID!, {
         variableValues: {
           username: userName,
-          userid: userId,
+          userId: userId,
         },
       });
     } else {
@@ -167,7 +168,7 @@ const Agent = ({
         <div className="card-border">
           <div className="card-content">
             <Image
-              src="/user-avatar.png"
+              src="/avatarhanu.avif"
               alt="profile-image"
               width={539}
               height={539}

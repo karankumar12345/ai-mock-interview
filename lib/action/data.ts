@@ -23,7 +23,23 @@ export async function getInterviewsByUserId(
       ...doc.data(),
     })) as Interview[];
   }
+  export async function getLatestInterviews(
+    params: GetLatestInterviewsParams
+  ): Promise<Interview[] | null> {
+    const { userId } = params;
   
+    const interviews = await db
+      .collection("interviews")
+      // .orderBy("createdAt", "desc")
+      .where("finalized", "==", true)
+    //  .where("userId","!=",userId)
+      .get();
+  
+    return interviews.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as Interview[];
+  }
   export async function getInterviewById(id: string): Promise<Interview | null> {
     const interview = await db.collection("interviews").doc(id).get();
   

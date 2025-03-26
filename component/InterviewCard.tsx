@@ -8,8 +8,8 @@ import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import DisplayTechIcons from "./DisplayTechIcon";
 
-
-const InterviewCard: React.FC<InterviewCardProps> = ({
+import { getFeedbackByInterviewId } from "@/lib/action/data";
+const InterviewCard: React.FC<InterviewCardProps> = async({
   interviewId,
   userId,
   role,
@@ -17,7 +17,10 @@ const InterviewCard: React.FC<InterviewCardProps> = ({
   techstack,
   createdAt,
 }) => {
-  const feedback = null as Feedback | null;
+  const feedback = userId && interviewId?await getFeedbackByInterviewId({
+    interviewId,
+    userId
+  }) :null;
 console.log("techstack",techstack[0]?.split(" "))
   const normalizedType = /mix/gi.test(type) ? "Mixed" : type;
   const formattedDate = dayjs( createdAt).format(
