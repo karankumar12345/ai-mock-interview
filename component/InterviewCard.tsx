@@ -59,17 +59,18 @@ console.log("techstack",techstack[0]?.split(" "))
 
             <div className="flex flex-row justify-between">
             <DisplayTechIcons techStack={techstack[0]?.split(" ")} />
-
-              <Button className="btn-primary">
+            <Button className="btn-primary">
                 <Link
                   href={
                     feedback
                       ? `/interview/${interviewId}/feedback`
                       : `interview/${interviewId}`
                   }
-                ></Link>
+                >View Interview</Link>
               </Button>
+            
             </div>
+         
           </div>
           <p className="line-clamp-2 mt-5">
             {feedback?.finalAssessment || "No feedback available"}

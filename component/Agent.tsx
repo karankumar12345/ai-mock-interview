@@ -1,4 +1,7 @@
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
 "use client";
+import { interviewer } from "@/constants";
 import { cn } from "@/lib/utils";
 import { vapi } from "@/lib/vapi.sdk";
 import Image from "next/image";
@@ -12,11 +15,6 @@ enum CallStatus {
   FINISHED = "FINISHED",
 }
 
-interface AgentProps {
-  userName: string;
-  userId: string;
-  type: "interviewer" | "candidate";
-}
 
 interface Message {
   type: string;
@@ -25,7 +23,7 @@ interface Message {
   content: string;
 }
 
-const Agent = ({ userName, userId, type }: AgentProps) => {
+const Agent = ({ userName, userId, type,interviewId,questions }: AgentProps) => {
   const router = useRouter();
   const [callStatus, setCallStatus] = useState<CallStatus>(CallStatus.INACTIVE);
   const [messages, setMessages] = useState<Message[]>([]);
@@ -66,9 +64,31 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
     };
   }, []);
 
+  const handlegeneratedFeedback=async (messages:SavedMessage[])=>{
+            console.log('Generated')
+            const {success,id}={
+              success:true,
+              id:'feedback_id'
+            
+            }
+            if(success&&id){
+              router.push(`/interview/${interviewId}/feedback`);
+            }
+            else{
+              console.log('Error saving feedback')
+              router.push('/');
+            }
+  }
   useEffect(() => {
+
+
     if (callStatus === CallStatus.FINISHED) {
-      router.push("/interview");
+      if(type==='generate'){
+        router.push('/')
+      }
+      else{
+          handlegeneratedFeedback(messages)
+      }
     }
   }, [callStatus, router]);
 
@@ -78,9 +98,26 @@ const Agent = ({ userName, userId, type }: AgentProps) => {
     console.log("VAPI Key:", process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID);
 
     try {
-      await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, {
-        variableValues: { userName, userId },
-      });
+      if(type==='generate'){
+        await vapi.start(process.env.NEXT_PUBLIC_VAPI_WORKFLOW_ID, {
+          variableValues: { userName, userId },
+        });
+      }
+   
+      let formattedQuestion='';
+      if(questions){
+        formattedQuestion=questions.map((question)=>`- ${question}`)
+        .join('\n')
+      }
+     
+      await vapi.start(interviewer,{
+        variableValues:{
+          userName,
+          userId,
+          interviewId,
+          questions:formattedQuestion
+        }
+      })
     } catch (error) {
       console.error("Call Start Error:", error);
       setCallStatus(CallStatus.INACTIVE);
