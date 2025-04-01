@@ -23,6 +23,41 @@ export async function getInterviewsByUserId(
       ...doc.data(),
     })) as Interview[];
   }
+export async function getDsaInterviewByUserID(
+    userId: string
+  ): Promise<DsaInterview[] | null> {
+    const interviews = await db
+      .collection("dsa_interviews")
+      .where("userId", "==", userId)
+      .orderBy("createdAt", "desc")
+      .get();
+  
+    return interviews.docs.map((doc) => ({
+      id: doc.id,
+      ...doc.data(),
+    })) as DsaInterview[];
+  }
+
+  export interface DsaInterview {
+    id: string;
+    topic: string;
+    difficulty: 'Easy' | 'Medium' | 'Hard';
+    questions: string[];
+    finalized: boolean;
+    userId: string;
+    coverImage: string;
+    createdAt: string;
+}
+
+export async function GetDsaInterview(id: string): Promise<DsaInterview | null> {
+  const interviewDoc = await db.collection("dsa_interviews").doc(id).get();
+console.log(interviewDoc)
+
+
+
+  return { id: interviewDoc.id, ...interviewDoc.data() } as DsaInterview;
+}
+
   export async function getLatestInterviews(
     params: GetLatestInterviewsParams
   ): Promise<Interview[] | null> {
@@ -47,6 +82,7 @@ export async function getInterviewsByUserId(
   }
   
   
+
 
   export async function createFeedback(params: CreateFeedbackParams) {
     const { interviewId, userId, transcript, feedbackId } = params;

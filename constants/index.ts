@@ -223,6 +223,7 @@ export interface Interview {
   createdAt: string; // Corrected spelling and format
 }
 
+
 export const dummyInterview: Interview[] = [
   {
     id: "1",

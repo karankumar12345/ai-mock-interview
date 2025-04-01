@@ -4,8 +4,9 @@ import Image from "next/image";
 
 import { Button } from "@/components/ui/button";
 import { getCurrentUser, getInterviewByUserID } from "@/lib/action/auth.action";
-import {  getLatestInterviews } from "@/lib/action/data";
+import {  getDsaInterviewByUserID, getLatestInterviews } from "@/lib/action/data";
 import InterviewCard from "@/component/InterviewCard";
+import InterviewCardDSA from "@/component/InterviewCardDSA";
 // import InterviewCard from "@/components/InterviewCard";
 
 // import { getCurrentUser } from "@/lib/actions/auth.action";
@@ -19,7 +20,7 @@ async function Home() {
 
   const [userInterviews, allInterview] = await Promise.all([
     getInterviewByUserID(user?.id!),
-    getLatestInterviews({ userId: user?.id! }),
+   getDsaInterviewByUserID(user?.id!)
   ]);
 
   const hasPastInterviews = userInterviews?.length! > 0;
@@ -36,6 +37,9 @@ async function Home() {
 
           <Button asChild className="btn-primary max-sm:w-full">
             <Link href="/interview">Start an Interview</Link>
+          </Button>
+          <Button asChild className="btn-primary max-sm:w-full">
+            <Link href="/dsa-interview">Start an DSA Interview</Link>
           </Button>
         </div>
 
@@ -71,18 +75,18 @@ async function Home() {
       </section>
 
       <section className="flex flex-col gap-6 mt-8">
-        <h2>Take Interviews</h2>
+        <h2>Dsa Interview</h2>
 
         <div className="interviews-section">
           {hasUpcomingInterviews ? (
             allInterview?.map((interview) => (
-              <InterviewCard
+              <InterviewCardDSA
                 key={interview.id}
-                userId={user?.id}
+                userId={user?.id || ""}
                 interviewId={interview.id}
-                role={interview.role}
-                type={interview.type}
-                techstack={interview.techstack}
+                role={interview.difficulty}
+              
+                techstack={interview.topic}
                 createdAt={interview.createdAt}
               />
             ))
